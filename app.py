@@ -184,45 +184,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── FLOATING CHAT CSS ────────────────────────────────────────────────────────
+# ── FLOATING CHAT IFRAME CSS ─────────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* THE FLOATING BUBBLE BUTTON */
-    div.stButton > button[key="chat_bubble_btn"] {
+    /* Make the chat component iframe float at bottom-right */
+    div[data-testid="stHtml"]:last-of-type {
         position: fixed !important;
-        bottom: 25px !important;
-        right: 150px !important; /* Moved left to avoid 'Manage App' button */
-        width: 60px !important;
-        height: 60px !important;
-        border-radius: 50% !important;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-        color: white !important;
-        font-size: 28px !important;
-        z-index: 1000001 !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        width: 420px !important;
+        height: 570px !important;
+        z-index: 999999 !important;
+        pointer-events: none !important;
+    }
+    div[data-testid="stHtml"]:last-of-type iframe {
+        pointer-events: all !important;
+        background: transparent !important;
         border: none !important;
-        box-shadow: 0 4px 15px rgba(99,102,241,0.4) !important;
-        transition: transform 0.2s !important;
-    }
-    div.stButton > button[key="chat_bubble_btn"]:hover {
-        transform: scale(1.1) !important;
-    }
-
-    /* THE FLOATING CHAT WINDOW */
-    div[data-testid="stVerticalBlock"]:has(div[data-testid="stChatInput"]) {
-        position: fixed !important;
-        bottom: 95px !important;
-        right: 150px !important; /* Moved left to avoid 'Manage App' button */
-        width: 380px !important;
-        height: 500px !important;
-        background: #111827 !important;
-        border: 1px solid #334155 !important;
-        border-radius: 16px !important;
-        z-index: 1000000 !important;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
-        padding: 15px !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -489,60 +467,172 @@ def render_sidebar(data, df_summary, df_trend):
 
 
 def render_floating_chat(data):
-    """Render the floating chat bubble and window in the MAIN content area (not the sidebar)."""
-    # Initialize chat state
-    if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "Hi! I'm your Gemini 2.5 AI Assistant. How can I help you today?"}]
-    if "show_chat" not in st.session_state:
-        st.session_state.show_chat = False
+    """Render a beautiful floating chat bubble + popup window using pure HTML/CSS/JS."""
+    api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+    ctx = build_chat_context(data).replace("'", "\\'").replace("\n", " ")[:2000]
+    prompt_prefix = SYSTEM_PROMPT.replace("'", "\\'").replace("\n", " ")
 
-    # Floating bubble button — rendered in main area, CSS makes it float
-    if st.button("💬", key="chat_bubble_btn"):
-        st.session_state.show_chat = not st.session_state.show_chat
-        st.rerun()
+    chat_html = f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+    body {{ background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; }}
 
-    # Floating chat window
-    if st.session_state.show_chat:
-        with st.container():
-            st.markdown("<h4 style='color:#1F4E79;margin-top:0;'>🤖 AI Assistant</h4>", unsafe_allow_html=True)
+    .chat-bubble {{
+        position: fixed; bottom: 24px; right: 24px;
+        width: 56px; height: 56px; border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+        border: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 20px rgba(99,102,241,0.5);
+        z-index: 99999; transition: transform 0.2s;
+    }}
+    .chat-bubble:hover {{ transform: scale(1.1); }}
+    .chat-bubble svg {{ width: 26px; height: 26px; fill: white; }}
 
-            chat_area = st.container(height=350)
-            with chat_area:
-                for msg in st.session_state.messages:
-                    with st.chat_message(msg["role"]):
-                        st.markdown(msg["content"])
+    .chat-window {{
+        position: fixed; bottom: 90px; right: 24px;
+        width: 360px; height: 460px;
+        background: #0f172a;
+        border: 1px solid #334155; border-radius: 16px;
+        display: none; flex-direction: column;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        z-index: 99998; overflow: hidden;
+        animation: slideUp 0.3s ease;
+    }}
+    .chat-window.open {{ display: flex; }}
+    @keyframes slideUp {{
+        from {{ opacity: 0; transform: translateY(20px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
 
-            if prompt := st.chat_input("Ask about trends...", key="floating_chat_input"):
-                st.session_state.messages.append({"role": "user", "content": prompt})
+    .chat-header {{
+        padding: 14px 16px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white; display: flex;
+        justify-content: space-between; align-items: center;
+    }}
+    .chat-header h4 {{ margin: 0; font-size: 14px; font-weight: 600; }}
+    .chat-header .close-btn {{
+        background: rgba(255,255,255,0.2); border: none;
+        color: white; width: 28px; height: 28px;
+        border-radius: 50%; cursor: pointer;
+        font-size: 16px; display: flex;
+        align-items: center; justify-content: center;
+        transition: background 0.2s;
+    }}
+    .chat-header .close-btn:hover {{ background: rgba(255,255,255,0.35); }}
 
-                with st.spinner("Thinking..."):
-                    api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
-                    if api_key:
-                        try:
-                            genai.configure(api_key=api_key)
-                            MODELS = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
-                            ctx = build_chat_context(data)
-                            full_p = f"{SYSTEM_PROMPT}\n\nContext:\n{ctx}\n\nUser: {prompt}"
+    .chat-messages {{
+        flex: 1; padding: 14px; overflow-y: auto;
+        display: flex; flex-direction: column; gap: 10px;
+        background: #0f172a;
+    }}
+    .chat-messages::-webkit-scrollbar {{ width: 4px; }}
+    .chat-messages::-webkit-scrollbar-thumb {{ background: #334155; border-radius: 4px; }}
 
-                            success = False
-                            last_err = ""
-                            for m_name in MODELS:
-                                try:
-                                    m = genai.GenerativeModel(m_name)
-                                    res = m.generate_content(full_p)
-                                    st.session_state.messages.append({"role": "assistant", "content": res.text})
-                                    success = True
-                                    st.rerun()
-                                    break
-                                except Exception as e_inner:
-                                    last_err = str(e_inner)
-                                    continue
-                            if not success:
-                                st.error(f"Models unavailable: {last_err}")
-                        except Exception as e:
-                            st.error(f"Error: {e}")
-                    else:
-                        st.error("API Key missing in Secrets")
+    .msg {{
+        max-width: 85%; padding: 10px 14px;
+        border-radius: 12px; font-size: 13px;
+        line-height: 1.5; color: #f1f5f9;
+        word-wrap: break-word;
+    }}
+    .msg.bot {{ background: #1e293b; align-self: flex-start; border-bottom-left-radius: 4px; }}
+    .msg.user {{ background: #6366f1; align-self: flex-end; border-bottom-right-radius: 4px; }}
+
+    .chat-input-area {{
+        padding: 12px; border-top: 1px solid #1e293b;
+        display: flex; gap: 8px; background: #111827;
+    }}
+    .chat-input-area input {{
+        flex: 1; padding: 10px 14px; border-radius: 10px;
+        border: 1px solid #334155; background: #1e293b;
+        color: #f1f5f9; outline: none; font-size: 13px;
+        font-family: 'Inter', sans-serif;
+    }}
+    .chat-input-area input::placeholder {{ color: #64748b; }}
+    .chat-input-area input:focus {{ border-color: #6366f1; }}
+    .chat-input-area button {{
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border: none; border-radius: 10px; color: white;
+        padding: 0 16px; cursor: pointer; font-weight: 600;
+        font-size: 13px; transition: opacity 0.2s;
+    }}
+    .chat-input-area button:hover {{ opacity: 0.85; }}
+    </style>
+
+    <button class="chat-bubble" onclick="toggleChat()" id="chatBubble">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+    </button>
+
+    <div class="chat-window" id="chatWin">
+        <div class="chat-header">
+            <h4>🤖 AI Assistant</h4>
+            <button class="close-btn" onclick="toggleChat()">&times;</button>
+        </div>
+        <div class="chat-messages" id="chatMsgs">
+            <div class="msg bot">Hi! How can I help you with the disease dashboard today?</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInp" placeholder="Ask about trends..." onkeypress="if(event.key==='Enter')sendChat()">
+            <button onclick="sendChat()">Send</button>
+        </div>
+    </div>
+
+    <script>
+    function toggleChat() {{
+        document.getElementById('chatWin').classList.toggle('open');
+    }}
+
+    async function sendChat() {{
+        const inp = document.getElementById('chatInp');
+        const msg = inp.value.trim();
+        if(!msg) return;
+        inp.value = '';
+
+        const msgs = document.getElementById('chatMsgs');
+        msgs.innerHTML += '<div class="msg user">' + msg + '</div>';
+        msgs.scrollTop = msgs.scrollHeight;
+
+        const typing = document.createElement('div');
+        typing.className = 'msg bot';
+        typing.innerText = 'Thinking...';
+        msgs.appendChild(typing);
+        msgs.scrollTop = msgs.scrollHeight;
+
+        const apiKey = '{api_key}';
+        const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+        let success = false;
+
+        for (const modelName of models) {{
+            try {{
+                const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent?key=' + apiKey;
+                const resp = await fetch(url, {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        contents: [{{ parts: [{{ text: '{prompt_prefix} Context: {ctx} User Question: ' + msg }}] }}]
+                    }})
+                }});
+                const data = await resp.json();
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {{
+                    typing.innerText = data.candidates[0].content.parts[0].text;
+                    success = true;
+                    break;
+                }}
+            }} catch (e) {{
+                continue;
+            }}
+        }}
+
+        if (!success) {{
+            typing.innerText = 'Sorry, the AI is currently busy. Please try again in a moment.';
+        }}
+        msgs.scrollTop = msgs.scrollHeight;
+    }}
+    </script>
+    """
+    components.html(chat_html, height=560)
 
 
 # ── METRIC CARD HTML ─────────────────────────────────────────────────────────
