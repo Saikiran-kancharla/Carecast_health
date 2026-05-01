@@ -185,30 +185,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── FLOATING CHAT IFRAME CSS ─────────────────────────────────────────────────
-st.markdown("""
-<style>
-    /* Truly floating container - doesn't occupy page space */
-    div[data-testid="stHtml"] {
-        position: fixed !important;
-        bottom: 20px !important;
-        right: 0 !important;
-        width: 420px !important;
-        height: 0px !important; /* Prevent layout displacement */
-        z-index: 999999 !important;
-        pointer-events: none !important;
-    }
-    div[data-testid="stHtml"] iframe {
-        position: fixed !important;
-        bottom: 0 !important;
-        right: 0 !important;
-        width: 420px !important;
-        height: 600px !important;
-        pointer-events: all !important;
-        border: none !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+# ── INLINE CHAT CSS (Integrated at top) ──────────────────────────────────────
 
 
 # ── AI CHATBOT CONFIG ────────────────────────────────────────────────────────
@@ -518,29 +495,20 @@ def render_floating_chat(data):
     * {{ margin: 0; padding: 0; box-sizing: border-box; }}
     body {{ background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; }}
 
-    .chat-bubble {{
-        position: fixed; bottom: 30px; right: 30px;
-        width: 60px; height: 60px; border-radius: 50%;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
-        border: none; cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 4px 20px rgba(99,102,241,0.5);
-        z-index: 99999; transition: transform 0.2s;
-    }}
-    .chat-bubble:hover {{ transform: scale(1.1); }}
-    .chat-bubble svg {{ width: 26px; height: 26px; fill: white; }}
+    .chat-bubble {
+        display: none;
+    }
 
-    .chat-window {{
-        position: fixed; bottom: 100px; right: 30px;
-        width: 380px; height: 520px;
+    .chat-window {
+        position: relative; top: 0; right: 0;
+        width: 100%; height: 500px;
         background: #0f172a;
         border: 1px solid #334155; border-radius: 16px;
-        display: none; flex-direction: column;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        z-index: 99998; overflow: hidden;
-        animation: slideUp 0.3s ease;
-    }}
-    .chat-window.open {{ display: flex; }}
+        display: flex; flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10; overflow: hidden;
+        margin-bottom: 25px;
+    }
     @keyframes slideUp {{
         from {{ opacity: 0; transform: translateY(20px); }}
         to {{ opacity: 1; transform: translateY(0); }}
@@ -607,25 +575,23 @@ def render_floating_chat(data):
 
     <div class="chat-window" id="chatWin">
         <div class="chat-header">
-            <h4>🤖 CareCast Assistant</h4>
-            <button class="close-btn" onclick="toggleChat()">&times;</button>
+            <h4>🤖 CareCast AI Assistant — Ask me anything about the dashboard</h4>
         </div>
         <div class="chat-messages" id="chatMsgs">
-            <div class="msg bot" style="background: #1e293b; color: #f1f5f9; padding: 12px; border-radius: 12px; border-bottom-left-radius: 4px;">
-                Hi! I'm the CareCast Assistant. Ask me about hospital demand forecasts, model accuracy, or specific diseases.
-                <div style="margin-top: 10px; font-weight: 600; color: #8b5cf6;">Suggested Questions:</div>
-                <ul style="margin-left: 18px; margin-top: 6px; font-size: 12px; color: #cbd5e1; list-style-type: disc;">
-                    <li>What is the purpose of this dashboard?</li>
-                    <li>Which models are used for forecasting?</li>
-                    <li>What metrics are predicted?</li>
-                    <li>What horizons can I view?</li>
-                    <li>Which diseases have the highest bed demand?</li>
-                    <li>How many diseases are tracked?</li>
-                    <li>How accurate are the models (MAPE)?</li>
-                    <li>How should I read the confidence ranges?</li>
-                    <li>Does the model handle seasonality?</li>
-                    <li>What are the top 5 diseases by case count?</li>
-                </ul>
+            <div class="msg bot">Hi! I'm the CareCast Assistant. You can ask me about hospital demand forecasts, model accuracy, or specific diseases. 
+            <br><br><b>Suggested Questions:</b>
+            <ul style="margin-left: 15px; margin-top: 5px;">
+                <li>What is the purpose of this dashboard?</li>
+                <li>Which models are used for forecasting?</li>
+                <li>What metrics are predicted?</li>
+                <li>What horizons can I view?</li>
+                <li>Which diseases have the highest bed demand?</li>
+                <li>How many diseases are tracked?</li>
+                <li>How accurate are the models (MAPE)?</li>
+                <li>How should I read the confidence ranges?</li>
+                <li>Does the model handle seasonality?</li>
+                <li>What are the top 5 diseases by case count?</li>
+            </ul>
             </div>
         </div>
         <div class="chat-input-area">
@@ -687,7 +653,7 @@ def render_floating_chat(data):
     }}
     </script>
     """
-    components.html(chat_html, height=0)
+    components.html(chat_html, height=560)
 
 
 # ── METRIC CARD HTML ─────────────────────────────────────────────────────────
@@ -1138,6 +1104,9 @@ def main():
     if selected_cat != "All":
         df_trend_filtered = df_trend[df_trend["disease_category"] == selected_cat]
 
+    # Render the chat at the very top of the main area
+    render_floating_chat(data)
+
     if page == "📊 Overview":
         page_overview(data, df_filtered, df_trend_filtered, horizon)
     elif page == "🔍 Disease Explorer":
@@ -1149,8 +1118,7 @@ def main():
     elif page == "🚨 Alerts":
         page_alerts(data, df_summary, df_trend, selected_cat, horizon)
 
-    # Always render the floating chat bubble (in main area, not sidebar)
-    render_floating_chat(data)
+    # Chat moved to top
 
 
 if __name__ == "__main__":
