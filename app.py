@@ -607,7 +607,21 @@ def render_floating_chat(data):
             <button class="close-btn" onclick="toggleChat()">&times;</button>
         </div>
         <div class="chat-messages" id="chatMsgs">
-            <div class="msg bot">Hi! How can I help you with the CareCast dashboard today?</div>
+            <div class="msg bot">Hi! I'm the CareCast Assistant. You can ask me about hospital demand forecasts, model accuracy, or specific diseases. 
+            <br><br><b>Suggested Questions:</b>
+            <ul style="margin-left: 15px; margin-top: 5px;">
+                <li>What is the purpose of this dashboard?</li>
+                <li>Which models are used for forecasting?</li>
+                <li>What metrics are predicted?</li>
+                <li>What horizons can I view?</li>
+                <li>Which diseases have the highest bed demand?</li>
+                <li>How many diseases are tracked?</li>
+                <li>How accurate are the models (MAPE)?</li>
+                <li>How should I read the confidence ranges?</li>
+                <li>Does the model handle seasonality?</li>
+                <li>What are the top 5 diseases by case count?</li>
+            </ul>
+            </div>
         </div>
         <div class="chat-input-area">
             <input type="text" id="chatInp" placeholder="Ask about trends..." onkeypress="if(event.key==='Enter')sendChat()">
