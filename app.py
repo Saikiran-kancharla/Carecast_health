@@ -1104,8 +1104,7 @@ def main():
     if selected_cat != "All":
         df_trend_filtered = df_trend[df_trend["disease_category"] == selected_cat]
 
-    # Render the chat at the very top of the main area
-    render_floating_chat(data)
+    # Chat moved back to bottom to ensure main dashboard loads first
 
     if page == "📊 Overview":
         page_overview(data, df_filtered, df_trend_filtered, horizon)
@@ -1118,7 +1117,8 @@ def main():
     elif page == "🚨 Alerts":
         page_alerts(data, df_summary, df_trend, selected_cat, horizon)
 
-    # Chat moved to top
+    # Render the chat at the bottom of the main area
+    render_floating_chat(data)
 
 
 if __name__ == "__main__":
