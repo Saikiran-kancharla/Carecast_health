@@ -188,19 +188,23 @@ st.markdown("""
 # ── FLOATING CHAT IFRAME CSS ─────────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Keep the chat component pinned at top-right */
-    div[data-testid="stHtml"]:last-of-type {
+    /* Truly floating container - doesn't occupy page space */
+    div[data-testid="stHtml"] {
         position: fixed !important;
         bottom: 20px !important;
         right: 0 !important;
         width: 420px !important;
-        height: 570px !important;
+        height: 0px !important; /* Prevent layout displacement */
         z-index: 999999 !important;
         pointer-events: none !important;
     }
-    div[data-testid="stHtml"]:last-of-type iframe {
+    div[data-testid="stHtml"] iframe {
+        position: fixed !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        width: 420px !important;
+        height: 600px !important;
         pointer-events: all !important;
-        background: transparent !important;
         border: none !important;
     }
 </style>
@@ -607,20 +611,21 @@ def render_floating_chat(data):
             <button class="close-btn" onclick="toggleChat()">&times;</button>
         </div>
         <div class="chat-messages" id="chatMsgs">
-            <div class="msg bot">Hi! I'm the CareCast Assistant. You can ask me about hospital demand forecasts, model accuracy, or specific diseases. 
-            <br><br><b>Suggested Questions:</b>
-            <ul style="margin-left: 15px; margin-top: 5px;">
-                <li>What is the purpose of this dashboard?</li>
-                <li>Which models are used for forecasting?</li>
-                <li>What metrics are predicted?</li>
-                <li>What horizons can I view?</li>
-                <li>Which diseases have the highest bed demand?</li>
-                <li>How many diseases are tracked?</li>
-                <li>How accurate are the models (MAPE)?</li>
-                <li>How should I read the confidence ranges?</li>
-                <li>Does the model handle seasonality?</li>
-                <li>What are the top 5 diseases by case count?</li>
-            </ul>
+            <div class="msg bot" style="background: #1e293b; color: #f1f5f9; padding: 12px; border-radius: 12px; border-bottom-left-radius: 4px;">
+                Hi! I'm the CareCast Assistant. Ask me about hospital demand forecasts, model accuracy, or specific diseases.
+                <div style="margin-top: 10px; font-weight: 600; color: #8b5cf6;">Suggested Questions:</div>
+                <ul style="margin-left: 18px; margin-top: 6px; font-size: 12px; color: #cbd5e1; list-style-type: disc;">
+                    <li>What is the purpose of this dashboard?</li>
+                    <li>Which models are used for forecasting?</li>
+                    <li>What metrics are predicted?</li>
+                    <li>What horizons can I view?</li>
+                    <li>Which diseases have the highest bed demand?</li>
+                    <li>How many diseases are tracked?</li>
+                    <li>How accurate are the models (MAPE)?</li>
+                    <li>How should I read the confidence ranges?</li>
+                    <li>Does the model handle seasonality?</li>
+                    <li>What are the top 5 diseases by case count?</li>
+                </ul>
             </div>
         </div>
         <div class="chat-input-area">
@@ -682,7 +687,7 @@ def render_floating_chat(data):
     }}
     </script>
     """
-    components.html(chat_html, height=560)
+    components.html(chat_html, height=0)
 
 
 # ── METRIC CARD HTML ─────────────────────────────────────────────────────────
