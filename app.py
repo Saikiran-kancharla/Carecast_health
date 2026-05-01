@@ -191,7 +191,7 @@ st.markdown("""
     /* Keep the chat component pinned at top-right */
     div[data-testid="stHtml"]:last-of-type {
         position: fixed !important;
-        top: 70px !important;
+        bottom: 20px !important;
         right: 0 !important;
         width: 420px !important;
         height: 570px !important;
@@ -515,8 +515,8 @@ def render_floating_chat(data):
     body {{ background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; }}
 
     .chat-bubble {{
-        position: fixed; top: 24px; right: 24px;
-        width: 56px; height: 56px; border-radius: 50%;
+        position: fixed; bottom: 30px; right: 30px;
+        width: 60px; height: 60px; border-radius: 50%;
         background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
         border: none; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
@@ -527,8 +527,8 @@ def render_floating_chat(data):
     .chat-bubble svg {{ width: 26px; height: 26px; fill: white; }}
 
     .chat-window {{
-        position: fixed; top: 90px; right: 24px;
-        width: 360px; height: 460px;
+        position: fixed; bottom: 100px; right: 30px;
+        width: 380px; height: 520px;
         background: #0f172a;
         border: 1px solid #334155; border-radius: 16px;
         display: none; flex-direction: column;
