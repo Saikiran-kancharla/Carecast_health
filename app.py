@@ -495,11 +495,11 @@ def render_floating_chat(data):
     * {{ margin: 0; padding: 0; box-sizing: border-box; }}
     body {{ background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; }}
 
-    .chat-bubble {
+    .chat-bubble {{
         display: none;
-    }
+    }}
 
-    .chat-window {
+    .chat-window {{
         position: relative; top: 0; right: 0;
         width: 100%; height: 500px;
         background: #0f172a;
@@ -508,7 +508,7 @@ def render_floating_chat(data):
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 10; overflow: hidden;
         margin-bottom: 25px;
-    }
+    }}
     @keyframes slideUp {{
         from {{ opacity: 0; transform: translateY(20px); }}
         to {{ opacity: 1; transform: translateY(0); }}
