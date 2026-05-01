@@ -185,7 +185,26 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── INLINE CHAT CSS (Integrated at top) ──────────────────────────────────────
+# ── FLOATING CHAT IFRAME CSS ─────────────────────────────────────────────────
+st.markdown("""
+<style>
+    /* Keep the chat component pinned at top-right */
+    div[data-testid="stHtml"]:last-of-type {
+        position: fixed !important;
+        top: 70px !important;
+        right: 0 !important;
+        width: 420px !important;
+        height: 570px !important;
+        z-index: 999999 !important;
+        pointer-events: none !important;
+    }
+    div[data-testid="stHtml"]:last-of-type iframe {
+        pointer-events: all !important;
+        background: transparent !important;
+        border: none !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 
 # ── AI CHATBOT CONFIG ────────────────────────────────────────────────────────
@@ -496,19 +515,28 @@ def render_floating_chat(data):
     body {{ background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; }}
 
     .chat-bubble {{
-        display: none;
+        position: fixed; top: 24px; right: 24px;
+        width: 56px; height: 56px; border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+        border: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 20px rgba(99,102,241,0.5);
+        z-index: 99999; transition: transform 0.2s;
     }}
+    .chat-bubble:hover {{ transform: scale(1.1); }}
+    .chat-bubble svg {{ width: 26px; height: 26px; fill: white; }}
 
     .chat-window {{
-        position: relative; top: 0; right: 0;
-        width: 100%; height: 500px;
+        position: fixed; top: 90px; right: 24px;
+        width: 360px; height: 460px;
         background: #0f172a;
         border: 1px solid #334155; border-radius: 16px;
-        display: flex; flex-direction: column;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10; overflow: hidden;
-        margin-bottom: 25px;
+        display: none; flex-direction: column;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        z-index: 99998; overflow: hidden;
+        animation: slideUp 0.3s ease;
     }}
+    .chat-window.open {{ display: flex; }}
     @keyframes slideUp {{
         from {{ opacity: 0; transform: translateY(20px); }}
         to {{ opacity: 1; transform: translateY(0); }}
@@ -575,7 +603,8 @@ def render_floating_chat(data):
 
     <div class="chat-window" id="chatWin">
         <div class="chat-header">
-            <h4>🤖 CareCast AI Assistant — Ask me anything about the dashboard</h4>
+            <h4>🤖 CareCast Assistant</h4>
+            <button class="close-btn" onclick="toggleChat()">&times;</button>
         </div>
         <div class="chat-messages" id="chatMsgs">
             <div class="msg bot">Hi! I'm the CareCast Assistant. You can ask me about hospital demand forecasts, model accuracy, or specific diseases. 
@@ -1104,7 +1133,6 @@ def main():
     if selected_cat != "All":
         df_trend_filtered = df_trend[df_trend["disease_category"] == selected_cat]
 
-    # Chat moved back to bottom to ensure main dashboard loads first
 
     if page == "📊 Overview":
         page_overview(data, df_filtered, df_trend_filtered, horizon)
@@ -1117,7 +1145,7 @@ def main():
     elif page == "🚨 Alerts":
         page_alerts(data, df_summary, df_trend, selected_cat, horizon)
 
-    # Render the chat at the bottom of the main area
+    # Always render the floating chat bubble (in main area, not sidebar)
     render_floating_chat(data)
 
 
